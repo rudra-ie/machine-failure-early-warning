@@ -1,0 +1,22 @@
+{
+    "model": "NumPy LSTM",
+    "sequence_length": 24,
+    "hidden_size": 32,
+    "epochs": 5,
+    "learning_rate": 0.001,
+    "train_machines": 30,
+    "test_machines": 10,
+    "train_sequences": 16171,
+    "test_sequences": 5717,
+    "precision": 0.6995305164319249,
+    "recall": 0.7760416666666666,
+    "f1": 0.7358024691358025,
+    "roc_auc": 0.9949349547511313,
+    "false_alarm_rate": 0.011583710407239819,
+    "confusion_matrix": {
+        "true_negative": 5461,
+        "false_positive": 64,
+        "false_negative": 43,
+        "true_positive": 149
+    }
+}

@@ -1,0 +1,2167 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Machine Failure Early-Warning System
+    </title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+        }
+
+        .container {
+            width: 95%;
+            max-width: 1600px;
+            margin: auto;
+            padding: 30px 0;
+        }
+
+        header {
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            margin: 0 0 8px;
+            font-size: 32px;
+        }
+
+        header p {
+            margin: 0;
+            color: #94a3b8;
+        }
+
+        .section-title {
+            margin: 35px 0 15px;
+            font-size: 22px;
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns:
+                repeat(auto-fit, minmax(180px, 1fr));
+            gap: 18px;
+        }
+
+        .card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+
+        .kpi-title {
+            color: #94a3b8;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .kpi-value {
+            font-size: 30px;
+            font-weight: bold;
+        }
+
+        .chart-grid {
+            display: grid;
+            grid-template-columns:
+                repeat(auto-fit, minmax(420px, 1fr));
+            gap: 20px;
+        }
+
+        .chart-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .chart-card h3 {
+            margin-top: 0;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 350px;
+        }
+
+        .wide {
+            grid-column: 1 / -1;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 12px 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border: 1px solid #475569;
+            background: #0f172a;
+            color: white;
+            font-size: 15px;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #334155;
+            text-align: left;
+        }
+
+        th {
+            color: #94a3b8;
+            font-size: 13px;
+        }
+
+        tr:hover {
+            background: #263449;
+            cursor: pointer;
+        }
+
+        .risk-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .risk-critical {
+            background: #7f1d1d;
+            color: #fecaca;
+        }
+
+        .risk-high {
+            background: #78350f;
+            color: #fed7aa;
+        }
+
+        .risk-medium {
+            background: #713f12;
+            color: #fef08a;
+        }
+
+        .risk-low {
+            background: #14532d;
+            color: #bbf7d0;
+        }
+
+        .machine-details {
+            display: none;
+        }
+
+        .machine-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .machine-header h2 {
+            margin: 0;
+        }
+
+        .sensor-grid {
+            display: grid;
+            grid-template-columns:
+                repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .sensor-card {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            padding: 15px;
+        }
+
+        .sensor-name {
+            color: #94a3b8;
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        .sensor-value {
+            font-size: 23px;
+            font-weight: bold;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns:
+                repeat(auto-fit, minmax(420px, 1fr));
+            gap: 20px;
+        }
+
+        .timeline-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .timeline-row {
+            display: grid;
+            grid-template-columns: 180px 1fr;
+            gap: 20px;
+            padding: 12px 0;
+            border-bottom: 1px solid #334155;
+        }
+
+        .timeline-label {
+            color: #94a3b8;
+        }
+
+        .timeline-value {
+            font-weight: bold;
+        }
+
+        .success {
+            color: #4ade80;
+        }
+
+        .warning {
+            color: #facc15;
+        }
+
+        .danger {
+            color: #f87171;
+        }
+
+        .info {
+            color: #60a5fa;
+        }
+
+        footer {
+            margin-top: 40px;
+            padding: 20px 0;
+            text-align: center;
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        @media (max-width: 700px) {
+
+            .container {
+                width: 92%;
+            }
+
+            header h1 {
+                font-size: 25px;
+            }
+
+            .chart-grid,
+            .detail-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .chart-container {
+                height: 300px;
+            }
+
+            .timeline-row {
+                grid-template-columns: 1fr;
+                gap: 5px;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+<div class="container">
+
+
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
+
+    <header>
+
+        <h1>
+            Machine Failure Early-Warning System
+        </h1>
+
+        <p>
+            Predictive maintenance dashboard using
+            Random Forest and NumPy LSTM
+        </p>
+
+    </header>
+
+
+    <!-- =====================================================
+         FLEET KPIs
+    ====================================================== -->
+
+    <h2 class="section-title">
+        Fleet Overview
+    </h2>
+
+    <div class="kpi-grid">
+
+        <div class="card">
+
+            <div class="kpi-title">
+                Total Machines
+            </div>
+
+            <div
+                id="totalMachines"
+                class="kpi-value"
+            >
+                -
+            </div>
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="kpi-title">
+                Critical
+            </div>
+
+            <div
+                id="criticalMachines"
+                class="kpi-value danger"
+            >
+                -
+            </div>
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="kpi-title">
+                High Risk
+            </div>
+
+            <div
+                id="highMachines"
+                class="kpi-value warning"
+            >
+                -
+            </div>
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="kpi-title">
+                Medium Risk
+            </div>
+
+            <div
+                id="mediumMachines"
+                class="kpi-value"
+            >
+                -
+            </div>
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="kpi-title">
+                Low Risk
+            </div>
+
+            <div
+                id="lowMachines"
+                class="kpi-value success"
+            >
+                -
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         EARLY WARNING KPIs
+    ====================================================== -->
+
+    <h2 class="section-title">
+        Early Warning Performance
+    </h2>
+
+    <div class="kpi-grid">
+
+        <div class="card">
+
+            <div class="kpi-title">
+                Failures Analyzed
+            </div>
+
+            <div
+                id="failuresAnalyzed"
+                class="kpi-value"
+            >
+                -
+            </div>
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="kpi-title">
+                Early Warnings
+            </div>
+
+            <div
+                id="warningsDetected"
+                class="kpi-value"
+            >
+                -
+            </div>
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="kpi-title">
+                Warning Detection Rate
+            </div>
+
+            <div
+                id="warningDetectionRate"
+                class="kpi-value"
+            >
+                -
+            </div>
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="kpi-title">
+                Average Lead Time
+            </div>
+
+            <div
+                id="averageLeadTime"
+                class="kpi-value"
+            >
+                -
+            </div>
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="kpi-title">
+                Maximum Lead Time
+            </div>
+
+            <div
+                id="maximumLeadTime"
+                class="kpi-value"
+            >
+                -
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         RISK OVERVIEW
+    ====================================================== -->
+
+    <h2 class="section-title">
+        Risk Overview
+    </h2>
+
+    <div class="chart-grid">
+
+        <div class="chart-card">
+
+            <h3>
+                Fleet Risk Distribution
+            </h3>
+
+            <div class="chart-container">
+
+                <canvas
+                    id="riskChart"
+                ></canvas>
+
+            </div>
+
+        </div>
+
+
+        <div class="chart-card">
+
+            <h3>
+                Top 10 Highest-Risk Machines
+            </h3>
+
+            <div class="chart-container">
+
+                <canvas
+                    id="topMachinesChart"
+                ></canvas>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         FEATURE IMPORTANCE
+    ====================================================== -->
+
+    <h2 class="section-title">
+        Model Explainability
+    </h2>
+
+    <div class="chart-grid">
+
+        <div class="chart-card wide">
+
+            <h3>
+                Random Forest Feature Importance
+            </h3>
+
+            <div class="chart-container">
+
+                <canvas
+                    id="featureImportanceChart"
+                ></canvas>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         MODEL COMPARISON
+    ====================================================== -->
+
+    <h2 class="section-title">
+        Model Comparison
+    </h2>
+
+    <div class="chart-grid">
+
+        <div class="chart-card wide">
+
+            <h3>
+                Random Forest vs NumPy LSTM
+            </h3>
+
+            <div class="chart-container">
+
+                <canvas
+                    id="modelComparisonChart"
+                ></canvas>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         MACHINE RANKING
+    ====================================================== -->
+
+    <h2 class="section-title">
+        Machine Risk Ranking
+    </h2>
+
+    <div class="card">
+
+        <input
+            id="machineSearch"
+            class="search-box"
+            type="text"
+            placeholder="Search machine ID..."
+        >
+
+        <div class="table-container">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Rank
+                        </th>
+
+                        <th>
+                            Machine
+                        </th>
+
+                        <th>
+                            Risk Score
+                        </th>
+
+                        <th>
+                            Risk Level
+                        </th>
+
+                        <th>
+                            LSTM Probability
+                        </th>
+
+                        <th>
+                            Vibration
+                        </th>
+
+                        <th>
+                            Temperature
+                        </th>
+
+                        <th>
+                            Current
+                        </th>
+
+                        <th>
+                            Pressure
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody
+                    id="machineTableBody"
+                ></tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         MACHINE DETAILS
+    ====================================================== -->
+
+    <section
+        id="machineDetails"
+        class="machine-details"
+    >
+
+        <h2 class="section-title">
+            Machine Details
+        </h2>
+
+
+        <div class="card">
+
+            <div class="machine-header">
+
+                <div>
+
+                    <h2
+                        id="selectedMachine"
+                    >
+                        Machine
+                    </h2>
+
+                    <p>
+                        Detailed machine health analysis
+                    </p>
+
+                </div>
+
+
+                <div>
+
+                    <span
+                        id="selectedRisk"
+                        class="risk-badge"
+                    >
+                        -
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <!-- SENSOR CARDS -->
+
+            <div class="sensor-grid">
+
+                <div class="sensor-card">
+
+                    <div class="sensor-name">
+                        Vibration
+                    </div>
+
+                    <div
+                        id="vibrationValue"
+                        class="sensor-value"
+                    >
+                        -
+                    </div>
+
+                </div>
+
+
+                <div class="sensor-card">
+
+                    <div class="sensor-name">
+                        Temperature
+                    </div>
+
+                    <div
+                        id="temperatureValue"
+                        class="sensor-value"
+                    >
+                        -
+                    </div>
+
+                </div>
+
+
+                <div class="sensor-card">
+
+                    <div class="sensor-name">
+                        Current
+                    </div>
+
+                    <div
+                        id="currentValue"
+                        class="sensor-value"
+                    >
+                        -
+                    </div>
+
+                </div>
+
+
+                <div class="sensor-card">
+
+                    <div class="sensor-name">
+                        Pressure
+                    </div>
+
+                    <div
+                        id="pressureValue"
+                        class="sensor-value"
+                    >
+                        -
+                    </div>
+
+                </div>
+
+
+                <div class="sensor-card">
+
+                    <div class="sensor-name">
+                        Risk Score
+                    </div>
+
+                    <div
+                        id="riskScoreValue"
+                        class="sensor-value"
+                    >
+                        -
+                    </div>
+
+                </div>
+
+
+                <div class="sensor-card">
+
+                    <div class="sensor-name">
+                        LSTM Probability
+                    </div>
+
+                    <div
+                        id="lstmProbabilityValue"
+                        class="sensor-value"
+                    >
+                        -
+                    </div>
+
+                </div>
+
+
+                <div class="sensor-card">
+
+                    <div class="sensor-name">
+                        Sensor Abnormality
+                    </div>
+
+                    <div
+                        id="sensorAbnormalityValue"
+                        class="sensor-value"
+                    >
+                        -
+                    </div>
+
+                </div>
+
+
+                <div class="sensor-card">
+
+                    <div class="sensor-name">
+                        Trend Score
+                    </div>
+
+                    <div
+                        id="trendScoreValue"
+                        class="sensor-value"
+                    >
+                        -
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- SENSOR HISTORY -->
+
+        <div class="detail-grid">
+
+            <div class="chart-card">
+
+                <h3>
+                    7-Day Sensor History
+                </h3>
+
+                <div class="chart-container">
+
+                    <canvas
+                        id="sensorChart"
+                    ></canvas>
+
+                </div>
+
+            </div>
+
+
+            <!-- LSTM HISTORY -->
+
+            <div class="chart-card">
+
+                <h3>
+                    LSTM Prediction History
+                </h3>
+
+                <div class="chart-container">
+
+                    <canvas
+                        id="predictionChart"
+                    ></canvas>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             EARLY WARNING TIMELINE
+        ================================================== -->
+
+        <h2 class="section-title">
+            Early Warning Timeline
+        </h2>
+
+        <div
+            id="failureTimeline"
+            class="timeline-card"
+        >
+
+            <p>
+                Select a machine to view its failure timeline.
+            </p>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         FOOTER
+    ====================================================== -->
+
+    <footer>
+
+        Machine Failure Early-Warning System
+
+        <br>
+
+        Synthetic predictive-maintenance dataset
+        • Random Forest
+        • NumPy LSTM
+        • Explainable risk engine
+
+    </footer>
+
+</div>
+
+
+<script>
+
+    let dashboardData = null;
+
+    let timelineData = null;
+
+    let earlyWarningData = null;
+
+    let riskChartInstance = null;
+
+    let topMachinesChartInstance = null;
+
+    let featureImportanceChartInstance = null;
+
+    let modelComparisonChartInstance = null;
+
+    let sensorChartInstance = null;
+
+    let predictionChartInstance = null;
+
+
+    /* ============================================================
+       LOAD DASHBOARD DATA
+    ============================================================ */
+
+    async function loadDashboard() {
+
+        try {
+
+            const [
+
+                dashboardResponse,
+
+                timelineResponse,
+
+                earlyWarningResponse
+
+            ] = await Promise.all([
+
+                fetch(
+                    "dashboard_data.json"
+                ),
+
+                fetch(
+                    "failure_timeline.json"
+                ),
+
+                fetch(
+                    "early_warning_summary.json"
+                )
+
+            ]);
+
+
+            dashboardData =
+                await dashboardResponse.json();
+
+
+            timelineData =
+                await timelineResponse.json();
+
+
+            earlyWarningData =
+                await earlyWarningResponse.json();
+
+
+            renderDashboard();
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "Dashboard loading error:",
+                error
+            );
+
+        }
+
+    }
+
+
+    /* ============================================================
+       RENDER DASHBOARD
+    ============================================================ */
+
+    function renderDashboard() {
+
+        renderKPIs();
+
+        renderEarlyWarningKPIs();
+
+        renderRiskChart();
+
+        renderTopMachinesChart();
+
+        renderFeatureImportanceChart();
+
+        renderModelComparisonChart();
+
+        renderMachineTable();
+
+    }
+
+
+    /* ============================================================
+       FLEET KPIs
+    ============================================================ */
+
+    function renderKPIs() {
+
+        const summary =
+            dashboardData.fleet_summary;
+
+
+        document.getElementById(
+            "totalMachines"
+        ).textContent =
+            summary.total_machines;
+
+
+        document.getElementById(
+            "criticalMachines"
+        ).textContent =
+            summary.critical;
+
+
+        document.getElementById(
+            "highMachines"
+        ).textContent =
+            summary.high;
+
+
+        document.getElementById(
+            "mediumMachines"
+        ).textContent =
+            summary.medium;
+
+
+        document.getElementById(
+            "lowMachines"
+        ).textContent =
+            summary.low;
+
+    }
+
+
+    /* ============================================================
+       EARLY WARNING KPIs
+    ============================================================ */
+
+    function renderEarlyWarningKPIs() {
+
+        if (!earlyWarningData) {
+
+            return;
+
+        }
+
+
+        document.getElementById(
+            "failuresAnalyzed"
+        ).textContent =
+
+            earlyWarningData
+                .total_failures_analyzed;
+
+
+        document.getElementById(
+            "warningsDetected"
+        ).textContent =
+
+            earlyWarningData
+                .warnings_detected;
+
+
+        document.getElementById(
+            "warningDetectionRate"
+        ).textContent =
+
+            earlyWarningData
+                .warning_detection_rate
+            + "%";
+
+
+        document.getElementById(
+            "averageLeadTime"
+        ).textContent =
+
+            earlyWarningData
+                .average_lead_time_hours
+            + " h";
+
+
+        document.getElementById(
+            "maximumLeadTime"
+        ).textContent =
+
+            earlyWarningData
+                .maximum_lead_time_hours
+            + " h";
+
+    }
+
+
+    /* ============================================================
+       RISK DISTRIBUTION
+    ============================================================ */
+
+    function renderRiskChart() {
+
+        const summary =
+            dashboardData.fleet_summary;
+
+
+        const ctx =
+            document
+                .getElementById("riskChart")
+                .getContext("2d");
+
+
+        if (riskChartInstance) {
+
+            riskChartInstance.destroy();
+
+        }
+
+
+        riskChartInstance =
+            new Chart(ctx, {
+
+                type: "doughnut",
+
+                data: {
+
+                    labels: [
+
+                        "Critical",
+                        "High",
+                        "Medium",
+                        "Low"
+
+                    ],
+
+                    datasets: [{
+
+                        data: [
+
+                            summary.critical,
+                            summary.high,
+                            summary.medium,
+                            summary.low
+
+                        ]
+
+                    }]
+
+                },
+
+                options: {
+
+                    responsive: true,
+
+                    maintainAspectRatio: false,
+
+                    plugins: {
+
+                        legend: {
+
+                            position: "bottom"
+
+                        }
+
+                    }
+
+                }
+
+            });
+
+    }
+
+
+    /* ============================================================
+       TOP MACHINES
+    ============================================================ */
+
+    function renderTopMachinesChart() {
+
+        const machines =
+            dashboardData.top_machines;
+
+
+        const ctx =
+            document
+                .getElementById("topMachinesChart")
+                .getContext("2d");
+
+
+        if (topMachinesChartInstance) {
+
+            topMachinesChartInstance.destroy();
+
+        }
+
+
+        topMachinesChartInstance =
+            new Chart(ctx, {
+
+                type: "bar",
+
+                data: {
+
+                    labels:
+                        machines.map(
+                            machine =>
+                                machine.machine_id
+                        ),
+
+                    datasets: [{
+
+                        label:
+                            "Risk Score",
+
+                        data:
+                            machines.map(
+                                machine =>
+                                    machine.risk_score
+                            )
+
+                    }]
+
+                },
+
+                options: {
+
+                    responsive: true,
+
+                    maintainAspectRatio: false,
+
+                    scales: {
+
+                        y: {
+
+                            beginAtZero: true,
+
+                            max: 1
+
+                        }
+
+                    }
+
+                }
+
+            });
+
+    }
+
+
+    /* ============================================================
+       FEATURE IMPORTANCE
+    ============================================================ */
+
+    function renderFeatureImportanceChart() {
+
+        const features =
+            dashboardData.feature_importance;
+
+
+        const ctx =
+            document
+                .getElementById(
+                    "featureImportanceChart"
+                )
+                .getContext("2d");
+
+
+        if (featureImportanceChartInstance) {
+
+            featureImportanceChartInstance.destroy();
+
+        }
+
+
+        featureImportanceChartInstance =
+            new Chart(ctx, {
+
+                type: "bar",
+
+                data: {
+
+                    labels:
+                        features.map(
+                            feature =>
+                                feature.feature
+                        ),
+
+                    datasets: [{
+
+                        label:
+                            "Importance",
+
+                        data:
+                            features.map(
+                                feature =>
+                                    feature.importance
+                            )
+
+                    }]
+
+                },
+
+                options: {
+
+                    indexAxis: "y",
+
+                    responsive: true,
+
+                    maintainAspectRatio: false,
+
+                    plugins: {
+
+                        legend: {
+
+                            display: false
+
+                        }
+
+                    }
+
+                }
+
+            });
+
+    }
+
+
+    /* ============================================================
+       MODEL COMPARISON
+    ============================================================ */
+
+    function renderModelComparisonChart() {
+
+        const comparison =
+            dashboardData.model_comparison;
+
+
+        const metrics = [
+
+            "precision",
+            "recall",
+            "f1",
+            "roc_auc"
+
+        ];
+
+
+        const labels = [
+
+            "Precision",
+            "Recall",
+            "F1 Score",
+            "ROC-AUC"
+
+        ];
+
+
+        const ctx =
+            document
+                .getElementById(
+                    "modelComparisonChart"
+                )
+                .getContext("2d");
+
+
+        if (modelComparisonChartInstance) {
+
+            modelComparisonChartInstance.destroy();
+
+        }
+
+
+        modelComparisonChartInstance =
+            new Chart(ctx, {
+
+                type: "bar",
+
+                data: {
+
+                    labels: labels,
+
+                    datasets: [
+
+                        {
+
+                            label:
+                                "Random Forest",
+
+                            data:
+                                metrics.map(
+                                    metric =>
+                                        comparison
+                                            .random_forest[
+                                                metric
+                                            ]
+                                )
+
+                        },
+
+                        {
+
+                            label:
+                                "NumPy LSTM",
+
+                            data:
+                                metrics.map(
+                                    metric =>
+                                        comparison
+                                            .numpy_lstm[
+                                                metric
+                                            ]
+                                )
+
+                        }
+
+                    ]
+
+                },
+
+                options: {
+
+                    responsive: true,
+
+                    maintainAspectRatio: false,
+
+                    scales: {
+
+                        y: {
+
+                            beginAtZero: true,
+
+                            max: 1
+
+                        }
+
+                    }
+
+                }
+
+            });
+
+    }
+
+
+    /* ============================================================
+       MACHINE TABLE
+    ============================================================ */
+
+    function renderMachineTable(
+        searchTerm = ""
+    ) {
+
+        const tbody =
+            document.getElementById(
+                "machineTableBody"
+            );
+
+
+        tbody.innerHTML = "";
+
+
+        const machines =
+            dashboardData.machine_ranking
+                .filter(machine =>
+                    machine.machine_id
+                        .toLowerCase()
+                        .includes(
+                            searchTerm
+                                .toLowerCase()
+                        )
+                );
+
+
+        machines.forEach(
+            (machine, index) => {
+
+                const row =
+                    document.createElement("tr");
+
+
+                row.onclick = () =>
+                    selectMachine(
+                        machine.machine_id
+                    );
+
+
+                const riskClass =
+                    "risk-" +
+                    machine.risk_level
+                        .toLowerCase();
+
+
+                row.innerHTML = `
+
+                    <td>
+                        ${index + 1}
+                    </td>
+
+                    <td>
+                        <strong>
+                            ${machine.machine_id}
+                        </strong>
+                    </td>
+
+                    <td>
+                        ${machine.risk_score.toFixed(3)}
+                    </td>
+
+                    <td>
+
+                        <span
+                            class="risk-badge ${riskClass}"
+                        >
+                            ${machine.risk_level}
+                        </span>
+
+                    </td>
+
+                    <td>
+                        ${(
+                            machine.lstm_probability
+                            * 100
+                        ).toFixed(1)}%
+                    </td>
+
+                    <td>
+                        ${machine.vibration.toFixed(3)}
+                    </td>
+
+                    <td>
+                        ${machine.temperature.toFixed(2)}
+                    </td>
+
+                    <td>
+                        ${machine.current.toFixed(2)}
+                    </td>
+
+                    <td>
+                        ${machine.pressure.toFixed(2)}
+                    </td>
+
+                `;
+
+
+                tbody.appendChild(row);
+
+            }
+        );
+
+    }
+
+
+    /* ============================================================
+       SELECT MACHINE
+    ============================================================ */
+
+    function selectMachine(machineId) {
+
+        const machine =
+            dashboardData.machine_details[
+                machineId
+            ];
+
+
+        if (!machine) {
+
+            return;
+
+        }
+
+
+        document.getElementById(
+            "machineDetails"
+        ).style.display = "block";
+
+
+        document.getElementById(
+            "selectedMachine"
+        ).textContent =
+            machineId;
+
+
+        const riskElement =
+            document.getElementById(
+                "selectedRisk"
+            );
+
+
+        riskElement.textContent =
+            machine.risk_level;
+
+
+        riskElement.className =
+            "risk-badge risk-" +
+            machine.risk_level.toLowerCase();
+
+
+        document.getElementById(
+            "vibrationValue"
+        ).textContent =
+            machine.sensors.vibration.toFixed(4);
+
+
+        document.getElementById(
+            "temperatureValue"
+        ).textContent =
+            machine.sensors.temperature.toFixed(2);
+
+
+        document.getElementById(
+            "currentValue"
+        ).textContent =
+            machine.sensors.current.toFixed(2);
+
+
+        document.getElementById(
+            "pressureValue"
+        ).textContent =
+            machine.sensors.pressure.toFixed(2);
+
+
+        document.getElementById(
+            "riskScoreValue"
+        ).textContent =
+            machine.risk_score.toFixed(3);
+
+
+        document.getElementById(
+            "lstmProbabilityValue"
+        ).textContent =
+            (
+                machine.lstm_probability * 100
+            ).toFixed(1) + "%";
+
+
+        document.getElementById(
+            "sensorAbnormalityValue"
+        ).textContent =
+            machine.sensor_abnormality.toFixed(3);
+
+
+        document.getElementById(
+            "trendScoreValue"
+        ).textContent =
+            machine.trend_score.toFixed(3);
+
+
+        renderSensorChart(
+            machine
+        );
+
+
+        renderPredictionChart(
+            machine
+        );
+
+
+        renderFailureTimeline(
+            machineId
+        );
+
+
+        document.getElementById(
+            "machineDetails"
+        ).scrollIntoView({
+
+            behavior: "smooth"
+
+        });
+
+    }
+
+
+    /* ============================================================
+       SENSOR HISTORY
+    ============================================================ */
+
+    function renderSensorChart(machine) {
+
+        const history =
+            machine.sensor_history;
+
+
+        const ctx =
+            document
+                .getElementById("sensorChart")
+                .getContext("2d");
+
+
+        if (sensorChartInstance) {
+
+            sensorChartInstance.destroy();
+
+        }
+
+
+        sensorChartInstance =
+            new Chart(ctx, {
+
+                type: "line",
+
+                data: {
+
+                    labels:
+                        history.map(
+                            item =>
+                                item.timestamp
+                        ),
+
+                    datasets: [
+
+                        {
+
+                            label:
+                                "Vibration",
+
+                            data:
+                                history.map(
+                                    item =>
+                                        item.vibration
+                                )
+
+                        },
+
+                        {
+
+                            label:
+                                "Temperature",
+
+                            data:
+                                history.map(
+                                    item =>
+                                        item.temperature
+                                )
+
+                        },
+
+                        {
+
+                            label:
+                                "Current",
+
+                            data:
+                                history.map(
+                                    item =>
+                                        item.current
+                                )
+
+                        },
+
+                        {
+
+                            label:
+                                "Pressure",
+
+                            data:
+                                history.map(
+                                    item =>
+                                        item.pressure
+                                )
+
+                        }
+
+                    ]
+
+                },
+
+                options: {
+
+                    responsive: true,
+
+                    maintainAspectRatio: false,
+
+                    interaction: {
+
+                        mode: "index",
+
+                        intersect: false
+
+                    },
+
+                    scales: {
+
+                        x: {
+
+                            ticks: {
+
+                                maxTicksLimit: 10
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            });
+
+    }
+
+
+    /* ============================================================
+       LSTM PREDICTION HISTORY
+    ============================================================ */
+
+    function renderPredictionChart(
+        machine
+    ) {
+
+        const history =
+            machine.prediction_history;
+
+
+        const ctx =
+            document
+                .getElementById(
+                    "predictionChart"
+                )
+                .getContext("2d");
+
+
+        if (predictionChartInstance) {
+
+            predictionChartInstance.destroy();
+
+        }
+
+
+        predictionChartInstance =
+            new Chart(ctx, {
+
+                type: "line",
+
+                data: {
+
+                    labels:
+                        history.map(
+                            item =>
+                                item.timestamp
+                        ),
+
+                    datasets: [{
+
+                        label:
+                            "LSTM Failure Probability",
+
+                        data:
+                            history.map(
+                                item =>
+                                    item.probability
+                            ),
+
+                        tension: 0.25,
+
+                        fill: false
+
+                    }]
+
+                },
+
+                options: {
+
+                    responsive: true,
+
+                    maintainAspectRatio: false,
+
+                    scales: {
+
+                        y: {
+
+                            min: 0,
+
+                            max: 1,
+
+                            ticks: {
+
+                                callback:
+                                    value =>
+                                        (
+                                            value * 100
+                                        ) + "%"
+
+                            }
+
+                        },
+
+                        x: {
+
+                            ticks: {
+
+                                maxTicksLimit: 10
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            });
+
+    }
+
+
+    /* ============================================================
+       FAILURE TIMELINE
+    ============================================================ */
+
+    function renderFailureTimeline(
+        machineId
+    ) {
+
+        const container =
+            document.getElementById(
+                "failureTimeline"
+            );
+
+
+        if (
+            !timelineData ||
+            !timelineData.machines ||
+            !timelineData.machines[machineId]
+        ) {
+
+            container.innerHTML = `
+
+                <p>
+                    No timeline data available
+                    for ${machineId}.
+                </p>
+
+            `;
+
+            return;
+
+        }
+
+
+        const timeline =
+            timelineData.machines[
+                machineId
+            ];
+
+
+        if (!timeline.has_failure) {
+
+            container.innerHTML = `
+
+                <div class="timeline-row">
+
+                    <div class="timeline-label">
+                        Status
+                    </div>
+
+                    <div class="timeline-value success">
+                        No failure recorded
+                    </div>
+
+                </div>
+
+                <div class="timeline-row">
+
+                    <div class="timeline-label">
+                        Early Warning
+                    </div>
+
+                    <div class="timeline-value">
+                        No failure event detected
+                    </div>
+
+                </div>
+
+            `;
+
+            return;
+
+        }
+
+
+        const warningClass =
+            timeline.warning_timestamp
+                ? "success"
+                : "danger";
+
+
+        container.innerHTML = `
+
+            <div class="timeline-row">
+
+                <div class="timeline-label">
+                    Status
+                </div>
+
+                <div class="timeline-value ${warningClass}">
+                    ${timeline.status}
+                </div>
+
+            </div>
+
+
+            <div class="timeline-row">
+
+                <div class="timeline-label">
+                    Failure Timestamp
+                </div>
+
+                <div class="timeline-value">
+                    ${timeline.failure_timestamp}
+                </div>
+
+            </div>
+
+
+            <div class="timeline-row">
+
+                <div class="timeline-label">
+                    First Warning
+                </div>
+
+                <div class="timeline-value">
+                    ${
+                        timeline.warning_timestamp
+                        || "No warning detected"
+                    }
+                </div>
+
+            </div>
+
+
+            <div class="timeline-row">
+
+                <div class="timeline-label">
+                    Warning Threshold
+                </div>
+
+                <div class="timeline-value">
+                    ${
+                        (
+                            timeline.warning_threshold
+                            * 100
+                        ).toFixed(0)
+                    }%
+                </div>
+
+            </div>
+
+
+            <div class="timeline-row">
+
+                <div class="timeline-label">
+                    Lead Time
+                </div>
+
+                <div class="timeline-value">
+
+                    ${
+                        timeline.lead_time_hours !== null
+                        ? timeline.lead_time_hours + " hours"
+                        : "N/A"
+                    }
+
+                </div>
+
+            </div>
+
+        `;
+
+    }
+
+
+    /* ============================================================
+       SEARCH
+    ============================================================ */
+
+    document
+        .getElementById("machineSearch")
+        .addEventListener(
+            "input",
+            function () {
+
+                renderMachineTable(
+                    this.value
+                );
+
+            }
+        );
+
+
+    /* ============================================================
+       START
+    ============================================================ */
+
+    loadDashboard();
+
+</script>
+
+
+</body>
+
+</html>

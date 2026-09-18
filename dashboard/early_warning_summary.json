@@ -1,0 +1,9 @@
+{
+  "total_failures_analyzed": 4,
+  "warnings_detected": 4,
+  "warnings_not_detected": 0,
+  "warning_detection_rate": 100.0,
+  "average_lead_time_hours": 37.25,
+  "minimum_lead_time_hours": 26.0,
+  "maximum_lead_time_hours": 51.0
+}
