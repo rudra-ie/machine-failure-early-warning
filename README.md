@@ -4,6 +4,8 @@ An end-to-end predictive maintenance system that analyzes machine sensor data an
 
 The project combines classical machine learning, a from-scratch NumPy LSTM, feature engineering, risk scoring, explainability, and an interactive web dashboard.
 
+The objective of this project is to predict whether a machine is likely to fail before the actual failure occurs. The system analyzes sensor and operational data such as temperature, rotational speed, torque, and other machine parameters and generates an early warning so maintenance can be performed proactively.
+
 ---
 
 ## Project Overview
@@ -94,6 +96,7 @@ This project simulates that environment and builds a complete machine-learning p
                     │ Interactive Dashboard│
                     └──────────────────────┘
 
+```
 ## Dataset
 
 The project uses a synthetically generated predictive-maintenance dataset.
