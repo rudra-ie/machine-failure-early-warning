@@ -116,3 +116,38 @@ The project uses a synthetically generated predictive-maintenance dataset.
 | Pressure | System pressure |
 
 Some machines remain healthy while others undergo gradual degradation followed by a failure event.
+
+## Results
+
+The models were evaluated using a machine-level train/test split.
+
+| Metric | Random Forest | NumPy LSTM |
+|---|---:|---:|
+| Precision | 0.8623 | 0.6995 |
+| Recall | 0.8264 | 0.7760 |
+| F1 Score | 0.8440 | 0.7358 |
+| ROC-AUC | 0.9946 | 0.9949 |
+| False Alarm Rate | 0.0078 | 0.0116 |
+
+The Random Forest achieved higher precision, recall and F1 score in this experiment, while the NumPy LSTM achieved a slightly higher ROC-AUC.
+
+## Early Warning Analysis
+
+The LSTM predictions were also analyzed as an operational early-warning signal.
+
+- Failures analyzed: 4
+- Warnings detected: 4
+- Warning detection rate: 100%
+- Average warning lead time: 37.25 hours
+- Minimum lead time: 26 hours
+- Maximum lead time: 51 hours
+
+The lead-time analysis uses the held-out test predictions and a warning threshold of 0.50.
+
+## Limitations
+
+- The dataset is synthetically generated and does not represent a real industrial environment.
+- Sensor ranges and risk thresholds are designed for this project demonstration.
+- The NumPy LSTM is implemented from scratch for educational and experimental purposes.
+- Model performance may differ significantly on real industrial data.
+- Further validation would be required before production deployment.
